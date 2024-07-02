@@ -1,57 +1,68 @@
 let h2 = document.querySelector('h2');
 let map;
 let brasilLayer;
+let geojsonFiles = [
+  'geojson/norte.geojson',
+  'geojson/nordeste.geojson',
+  'geojson/centro-oeste.geojson',
+  'geojson/sudeste.geojson',
+  'geojson/sul.geojson'
+];
 
 // Função para inicializar o mapa e centralizá-lo no Brasil com controle de zoom
 function initMap() {
-  // Cria o mapa e define a visão inicial para cobrir o Brasil
-  map = L.map('mapid').setView([-15.7942, -47.8821], 4);  // Zoom mais afastado para mostrar o Brasil inteiro
+  map = L.map('mapid').setView([-15.7942, -47.8821], 4);
+  if (!map) {
+    console.error('Failed to initialize the map');
+    return;
+  }
 
-  // Adiciona a camada de tiles do OpenStreetMap
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(map);
 
-  // Adiciona controle de zoom personalizado na posição superior direita
+  // Adicionar controle de zoom personalizado
   L.control.zoom({
     position: 'topright'
   }).addTo(map);
 
-  // Carrega o arquivo brasil.geojson e adiciona ao mapa
+  // Carregar dados GeoJSON
   loadBrasilData();
 }
 
-// Função para carregar o arquivo brasil.geojson e adicionar ao mapa
+// Função para carregar arquivos GeoJSON e adicioná-los ao mapa
 function loadBrasilData() {
-  fetch('./brasil.geojson')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Erro na resposta da rede: ' + response.statusText);
-      }
-      return response.json();
-    })
-    .then(data => {
-      brasilLayer = L.geoJson(data, {
-        style: function(feature) {
-          return {
-            weight: 2,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0  // Removido a cor verde e o preenchimento
-          };
-        },
-        onEachFeature: function(feature, layer) {
-          layer.on({
-            mouseover: highlightFeature,
-            mouseout: resetHighlight,
-            click: enviarLocalizacao
-          });
+  geojsonFiles.forEach(file => {
+    fetch(file)
+      .then(response => response.json())
+      .then(data => {
+        if (!data) {
+          console.error('Failed to load data from ' + file);
+          return;
         }
-      }).addTo(map);
-    })
-    .catch(error => {
-      console.error('Erro ao carregar brasil.geojson:', error);
-    });
+        brasilLayer = L.geoJson(data, {
+          style: function(feature) {
+            return {
+              weight: 2,
+              opacity: 1,
+              color: 'white',
+              fillOpacity: 0.7,
+              fillColor: '#4CAF50'
+            };
+          },
+          onEachFeature: function(feature, layer) {
+            layer.on({
+              mouseover: highlightFeature,
+              mouseout: resetHighlight,
+              click: enviarLocalizacao
+            });
+          }
+        }).addTo(map);
+      })
+      .catch(error => {
+        console.error('Erro ao carregar ' + file + ':', error);
+      });
+  });
 }
 
 // Define as funções de highlight e reset
@@ -61,10 +72,10 @@ function highlightFeature(e) {
     weight: 3,
     color: '#3388ff',
     dashArray: '',
-    fillOpacity: 0.5  // Adiciona um leve preenchimento para destacar a região
+    fillOpacity: 0.7
   });
 
-  if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+  if (!L.Browser.ie &&!L.Browser.opera &&!L.Browser.edge) {
     layer.bringToFront();
   }
 }
@@ -85,45 +96,45 @@ function enviarLocalizacao(e) {
     },
     body: JSON.stringify({ location: regionName })
   })
-  .then(response => {
-    if (!response.ok) {
-      throw new Error('Erro ao enviar localização: ' + response.statusText);
-    }
-    return response.json();
-  })
-  .then(data => {
-    console.log('Success:', data);
-    alert('Sua localização foi registrada com sucesso!');
-  })
-  .catch((error) => {
-    console.error('Erro ao enviar localização:', error);
-    alert('Houve um erro ao enviar a localização.');
-  });
+   .then(response => {
+      if (!response.ok) {
+        throw new Error('Erro ao enviar localização: ' + response.statusText);
+      }
+      return response.json();
+    })
+   .then(data => {
+      console.log('Success:', data);
+      alert('Sua localização foi registrada com sucesso!');
+    })
+   .catch((error) => {
+      console.error('Erro ao enviar localização:', error);
+      alert('Houve um erro ao enviar a localização.');
+    });
 }
 
-// Função de sucesso da geolocalização
 function success(pos) {
   console.log(pos.coords.latitude, pos.coords.longitude);
   h2.textContent = `Latitude: ${pos.coords.latitude}, Longitude: ${pos.coords.longitude}`;
 
-  // Ajusta a visão do mapa para a localização do usuário com zoom mais afastado
-  map.setView([pos.coords.latitude, pos.coords.longitude], 6);  // Zoom mais afastado para mostrar uma área maior do Brasil
+  if (!map) {
+    initMap();
+  }
+
+  map.setView([pos.coords.latitude, pos.coords.longitude], 13);
 
   L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map)
-    .bindPopup('Eu estou aqui.<br> Facilmente customizável.')
-    .openPopup();
+   .bindPopup('Eu estou aqui.<br> Facilmente customizável.')
+   .openPopup();
 }
 
-// Função de erro da geolocalização
 function error(err) {
-  console.error('Erro na geolocalização:', err);
+  console.error(err);
 }
 
-// Inicializa o mapa
-initMap();
-
-// Solicita a geolocalização do usuário
 navigator.geolocation.watchPosition(success, error, {
   enableHighAccuracy: true,
   timeout: 5000
 });
+
+// Inicializar o mapa
+initMap();
