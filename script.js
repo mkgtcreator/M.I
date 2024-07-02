@@ -2,11 +2,11 @@ let h2 = document.querySelector('h2');
 let map;
 let brasilLayer;
 let geojsonFiles = [
-  'geojson/norte.geojson',
-  'geojson/nordeste.geojson',
-  'geojson/centro-oeste.geojson',
-  'geojson/sudeste.geojson',
-  'geojson/sul.geojson'
+  'https://github.com/mkgtcreator/M.I/main/geojson/norte.geojson',
+  'https://github.com/mkgtcreator/M.I/main/geojson/nordeste.geojson',
+  'https://github.com/mkgtcreator/M.I/main/geojson/centro-oeste.geojson',
+  'https://github.com/mkgtcreator/M.I/main/geojson/sudeste.geojson',
+  'https://github.com/mkgtcreator/M.I/main/geojson/sul.geojson'
 ];
 
 // Função para inicializar o mapa e centralizá-lo no Brasil com controle de zoom
