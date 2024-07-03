@@ -33,13 +33,20 @@ function initMap() {
 // Função para carregar arquivos GeoJSON e adicioná-los ao mapa
 function loadBrasilData() {
   geojsonFiles.forEach(file => {
+    console.log('Carregando arquivo:', file);
     fetch(file)
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Erro ao carregar arquivo: ' + response.statusText);
+        }
+        return response.json();
+      })
       .then(data => {
         if (!data) {
           console.error('Failed to load data from ' + file);
           return;
         }
+        console.log('Dados carregados:', data);
         brasilLayer = L.geoJson(data, {
           style: function(feature) {
             return {
